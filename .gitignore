@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.npm
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime
+pids/
+*.pid
+*.seed
+
+# Build outputs
+dist/
+build/
+
+# Coverage
+coverage/
+.nyc_output
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker/ssl/
+
+# Temp
+tmp/
+temp/
+uploads/

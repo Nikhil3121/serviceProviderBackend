@@ -1,0 +1,438 @@
+{
+  "info": {
+    "name": "Service Provider API",
+    "description": "Complete API collection for the Service Provider Backend. Set the `baseUrl` variable to your server URL.\n\n## Setup\n1. Import this collection into Postman\n2. Set environment variable `baseUrl` = `http://localhost:5000`\n3. After login, the `accessToken` variable is auto-set by the login request script\n4. Use the **Authorize** folder to get tokens before testing protected endpoints",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",     "value": "http://localhost:5000/api/v1", "type": "string" },
+    { "key": "accessToken", "value": "",  "type": "string" },
+    { "key": "refreshToken","value": "",  "type": "string" },
+    { "key": "userId",      "value": "",  "type": "string" },
+    { "key": "projectId",   "value": "",  "type": "string" },
+    { "key": "contactId",   "value": "",  "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔍 Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Check if the API is running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) {",
+            "  const res = pm.response.json();",
+            "  pm.collectionVariables.set('userId', res.data.userId);",
+            "  pm.test('Signup successful', () => pm.expect(res.success).to.be.true);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/signup",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+919876543210\",\n  \"password\": \"SecurePass@123\",\n  \"confirmPassword\": \"SecurePass@123\",\n  \"captchaToken\": \"test_token\"\n}" }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) {",
+            "  const res = pm.response.json();",
+            "  pm.collectionVariables.set('accessToken',  res.data.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+            "  pm.collectionVariables.set('userId', res.data.user._id);",
+            "  pm.test('Login successful', () => pm.expect(res.success).to.be.true);",
+            "  pm.test('Access token present', () => pm.expect(res.data.accessToken).to.be.a('string'));",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass@123\",\n  \"captchaToken\": \"test_token\"\n}" }
+          }
+        },
+        {
+          "name": "Get Me (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/verify-email?token=PASTE_TOKEN_FROM_EMAIL_HERE",
+              "query": [{ "key": "token", "value": "PASTE_TOKEN_FROM_EMAIL_HERE" }]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP (Phone)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/verify-otp",
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919876543210\",\n  \"otp\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/resend-otp",
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919876543210\"\n}" }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@example.com\",\n  \"captchaToken\": \"test_token\"\n}" }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/reset-password",
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_FROM_EMAIL\",\n  \"password\": \"NewSecurePass@456\",\n  \"confirmPassword\": \"NewSecurePass@456\"\n}" }
+          }
+        },
+        {
+          "name": "Change Password (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/auth/change-password",
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"SecurePass@123\",\n  \"newPassword\": \"NewSecurePass@456\",\n  \"confirmPassword\": \"NewSecurePass@456\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) {",
+            "  const res = pm.response.json();",
+            "  pm.collectionVariables.set('accessToken',  res.data.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Logout (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/auth/logout",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Logout All Devices (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/auth/logout-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/users/me",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Updated\"\n}" }
+          }
+        },
+        {
+          "name": "Upload Avatar",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me/avatar",
+            "body": { "mode": "formdata", "formdata": [{ "key": "avatar", "type": "file", "src": "" }] }
+          }
+        },
+        {
+          "name": "Delete Avatar",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me/avatar"
+          }
+        },
+        {
+          "name": "Deactivate Account",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Projects (Public)",
+      "item": [
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects?page=1&limit=10&category=web&featured=false&sort=-createdAt",
+              "query": [
+                { "key": "page",     "value": "1" },
+                { "key": "limit",    "value": "10" },
+                { "key": "category", "value": "web" },
+                { "key": "featured", "value": "false" },
+                { "key": "sort",     "value": "-createdAt" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Project by Slug or ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/my-project-slug"
+          }
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/categories"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Projects (Admin CRUD)",
+      "item": [
+        {
+          "name": "Create Project",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) {",
+            "  const res = pm.response.json();",
+            "  pm.collectionVariables.set('projectId', res.data._id);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/projects",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title",            "value": "Web Development Service", "type": "text" },
+                { "key": "description",      "value": "Full-stack web development with React and Node.js. We build scalable, modern, and high-performance web applications tailored to your business needs.", "type": "text" },
+                { "key": "shortDescription", "value": "Professional web development services", "type": "text" },
+                { "key": "category",         "value": "Web Development", "type": "text" },
+                { "key": "tags",             "value": "[\"react\",\"nodejs\",\"mongodb\"]", "type": "text" },
+                { "key": "pricing[type]",    "value": "fixed", "type": "text" },
+                { "key": "pricing[amount]",  "value": "50000", "type": "text" },
+                { "key": "pricing[currency]","value": "INR", "type": "text" },
+                { "key": "isActive",         "value": "true", "type": "text" },
+                { "key": "isFeatured",       "value": "false", "type": "text" },
+                { "key": "images",           "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Web Development Service\",\n  \"isFeatured\": true,\n  \"pricing\": {\n    \"type\": \"fixed\",\n    \"amount\": 75000,\n    \"currency\": \"INR\",\n    \"label\": \"Starting from\"\n  }\n}" }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Delete Project Image",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}/images/service-provider%2Fprojects%2Fabcdef"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📬 Contact",
+      "item": [
+        {
+          "name": "Submit Contact Form",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) {",
+            "  const res = pm.response.json();",
+            "  pm.collectionVariables.set('contactId', res.data.id);",
+            "  pm.test('Contact submitted', () => pm.expect(res.success).to.be.true);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/contact",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"+919876543211\",\n  \"subject\": \"Project Inquiry\",\n  \"message\": \"Hello, I would like to discuss a web development project for my e-commerce business.\",\n  \"captchaToken\": \"test_token\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛡️ Admin",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/admin/dashboard"
+          }
+        },
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=1&limit=10&search=john&role=user",
+              "query": [
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "10" },
+                { "key": "search", "value": "john" },
+                { "key": "role",   "value": "user" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/admin/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{userId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"admin\",\n  \"isActive\": true,\n  \"isEmailVerified\": true,\n  \"isPhoneVerified\": true\n}" }
+          }
+        },
+        {
+          "name": "Delete User (Soft)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/admin/users/{{userId}}"
+          }
+        },
+        {
+          "name": "List Contacts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/contacts?status=new&page=1&limit=10",
+              "query": [
+                { "key": "status", "value": "new" },
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Contact",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/admin/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "Update Contact Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/admin/contacts/{{contactId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"replied\",\n  \"adminNotes\": \"Replied via email on 2024-01-15. Client interested in basic package.\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Contact",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/admin/contacts/{{contactId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
